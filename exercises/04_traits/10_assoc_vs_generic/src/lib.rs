@@ -13,6 +13,94 @@
 // You don't have to though: it's perfectly okay to write three separate
 // implementations manually. Venture further only if you're curious.
 
+pub trait Power {
+    type Output;
+
+    // Separate methods with distinct names
+    fn power_u16(self, n: u16) -> Self::Output;
+    fn power_u32(self, n: u32) -> Self::Output;
+    fn power_ref_u32(self, n: &u32) -> Self::Output;
+    
+    // Generic method that dispatches to the appropriate implementation
+    fn power<T>(self, n: T) -> Self::Output
+    where
+        Self: Sized,
+        T: PowerArg<Self>;
+}
+
+// Helper trait to handle dispatching
+pub trait PowerArg<P: Power> {
+    fn apply_power(self, base: P) -> P::Output;
+}
+
+// Implement the PowerArg trait for each argument type
+impl<P: Power> PowerArg<P> for u16 {
+    fn apply_power(self, base: P) -> P::Output {
+        base.power_u16(self)
+    }
+}
+
+impl<P: Power> PowerArg<P> for u32 {
+    fn apply_power(self, base: P) -> P::Output {
+        base.power_u32(self)
+    }
+}
+
+impl<P: Power> PowerArg<P> for &u32 {
+    fn apply_power(self, base: P) -> P::Output {
+        base.power_ref_u32(self)
+    }
+}
+
+impl Power for u32 {
+    type Output = u32;
+
+    fn power_u16(self, n: u16) -> Self::Output {
+        self.pow(n as u32)
+    }
+
+    fn power_u32(self, n: u32) -> Self::Output {
+        self.pow(n)
+    }
+
+    fn power_ref_u32(self, n: &u32) -> Self::Output {
+        self.pow(*n)
+    }
+    
+    fn power<T>(self, n: T) -> Self::Output
+    where
+        Self: Sized,
+        T: PowerArg<Self>
+    {
+        n.apply_power(self)
+    }
+}
+
+// We can implement for other types too if needed
+impl Power for u64 {
+    type Output = u64;
+
+    fn power_u16(self, n: u16) -> Self::Output {
+        self.pow(n as u32)
+    }
+
+    fn power_u32(self, n: u32) -> Self::Output {
+        self.pow(n)
+    }
+
+    fn power_ref_u32(self, n: &u32) -> Self::Output {
+        self.pow(*n)
+    }
+    
+    fn power<T>(self, n: T) -> Self::Output
+    where
+        Self: Sized,
+        T: PowerArg<Self>
+    {
+        n.apply_power(self)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Power;
